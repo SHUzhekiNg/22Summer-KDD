@@ -45,6 +45,7 @@ from multiprocessing import Pool
 #         scores = self.compute_scores(h_n)
 #         return scores
 
+
 class MultiSequence(Module):
     def __init__(self, hidden_size, n_node):
         super(MultiSequence, self).__init__()
@@ -99,6 +100,7 @@ class MultiSequence(Module):
         final_out = agg[:, -1]
         scores = self.compute_scores(final_out)
         return scores
+
 
 def train(model, train_loader, test_loader, eval, locale, device):
     loss_function = nn.CrossEntropyLoss()
@@ -157,9 +159,11 @@ def train(model, train_loader, test_loader, eval, locale, device):
             torch.save(model.state_dict(), f"recc_model_{locale}.pt")
             best_mrr = mrr
 
+
 def idx_to_id(input):
     lookup, jobs = input
     return [[lookup[idx] for idx in session] for batch in jobs for session in batch]
+
 
 def eval(loaders, sets, models, device):
     num_threads = 16

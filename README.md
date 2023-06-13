@@ -14,11 +14,21 @@
 
       `get_embeddings()`对标题和`desc`（是什么啊）进行encoding，使用sentence_transformers。
 
-      > ​	Running on RTX3060 12G LHR, 170/170W, used/all 9/12G.
+      > ​	Running on RTX3060(LHR) 12G , 170/170W, used/all 9/12G.
       >
       > ​	Around 1.5h.
 
       <img src="https://raw.githubusercontent.com/SHUzhekiNg/SHUzhekiNg.github.io/main/assets/typoraimages/image-20230613132718083.png" alt="image-20230613132718083" style="zoom:67%;" />
 
-      
+2. 运行sr_san.py
+
+   1. 先训练，设置line7 `TRAIN = True`
+
+   2. 在根目录下新建params/文件夹，如图：
+
+      <img src="https://raw.githubusercontent.com/SHUzhekiNg/SHUzhekiNg.github.io/main/assets/typoraimages/image-20230613140122272.png" alt="image-20230613140122272" style="zoom:67%;" />
+
+   3. Run.
+
+   
 

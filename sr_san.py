@@ -4,11 +4,11 @@ from sr_san.sr_data import SessionsDataset, collate_fn, collate_fn_valid
 from torch.utils.data import DataLoader
 import os.path as osp
 
-TRAIN=False
-HIDDEN_SIZE=768
-BATCH_SIZE=64
+TRAIN = True
+HIDDEN_SIZE = 768
+BATCH_SIZE = 64
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-PARAMS='params/hier_filter10_2'
+PARAMS = 'params/hier_filter10_2'
 
 # all product
 # UK_PRODUCTS = 500180

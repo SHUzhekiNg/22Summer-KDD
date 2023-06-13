@@ -7,11 +7,12 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import common.utils as utils
 
-TRAIN=False
-MODEL_PATH='params/baseline-rnn.pt'
+TRAIN = False
+MODEL_PATH = 'params/baseline-rnn.pt'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 loss_fn = nn.MSELoss()
 batch_size = 32
+
 
 class BaselineRNN(nn.Module):
     def __init__(self):
@@ -43,6 +44,7 @@ class BaselineRNN(nn.Module):
         out = self.linear(out)
         return out
 
+
 def train_step(model, optimizer, data, y):
     data = data.to(device)
     y = y.to(device)
@@ -53,6 +55,7 @@ def train_step(model, optimizer, data, y):
     optimizer.step()
     return loss.item()
 
+
 def collate_fn(batch):
     x, y = [], []
 
@@ -62,6 +65,7 @@ def collate_fn(batch):
     x = nn.utils.rnn.pack_sequence(x, enforce_sorted=False)
     y = torch.stack(y)
     return x, y
+
 
 def train():
     dataset = SessionsDataset('./data')
@@ -75,7 +79,7 @@ def train():
     losses = []
     for _ in range(1):
         for x, y in tqdm(loader):
-            if x == None:
+            if x is None:
                 continue
             loss = train_step(model, optimizer, x, y)
             losses.append(loss)
@@ -85,6 +89,7 @@ def train():
                 writer.add_scalar('train/loss', avg_loss, step)
             step += 1
     torch.save(model.state_dict(), MODEL_PATH)
+
 
 def eval():
     dataset = SessionsDataset('./data')
@@ -111,8 +116,10 @@ def eval():
     predictions.to_csv('baseline-rnn-out.csv')
     utils.prepare_submission(predictions, "task1")
 
-if TRAIN:
-    train()
-else:
-    with torch.no_grad():
-        eval()
+
+if __name__ == '__main__':
+    if TRAIN:
+        train()
+    else:
+        with torch.no_grad():
+            eval()
