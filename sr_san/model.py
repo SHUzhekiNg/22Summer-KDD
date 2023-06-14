@@ -107,7 +107,7 @@ def train(model, train_loader, test_loader, eval, locale, device):
     optimizer = torch.optim.Adam(model.parameters(), lr=.001, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=.75)
     best_mrr = 0
-    for epoch in range(30):
+    for epoch in range(1):  # 30
         print('Epoch:', epoch)
         model.train()
         losses = []

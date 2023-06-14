@@ -76,6 +76,7 @@ class SessionsDataset(Dataset):
         self.id_mapping = {id: i for i, id in enumerate(self.nodes['id'])}
         self.reverse_id_mapping = self.nodes['id'].tolist()
         self.sent_model = SentenceTransformer('sentence-transformers/stsb-xlm-r-multilingual')
+        # print(self.descs)
         # self.ret_count = 0
 
     def try_load_cache(self):
@@ -107,6 +108,7 @@ class SessionsDataset(Dataset):
         if osp.exists(self.descs_cache_path):
             print(f"Trying to open {self.descs_cache_path}")
             self.descs = torch.load(self.descs_cache_path)
+            print(type(self.descs))
 
         return has_sessions, has_nodes
 
@@ -136,6 +138,7 @@ class SessionsDataset(Dataset):
         # if self.ret_count % 1000 == 0 and self.ret_count > 0:
         #   torch.save(self.title_cache, self.titles_cache_path)
         #   print('saved titles')
+        # print(self.titles, id)
         return torch.from_numpy(self.titles[id])
 
     def encode_desc(self, id):
@@ -149,6 +152,7 @@ class SessionsDataset(Dataset):
         # if self.ret_count % 1000 == 0 and self.ret_count > 0:
         #   torch.save(self.desc_cache, self.descs_cache_path)
         #   print('saved descs')
+        # print(, id)
         return torch.from_numpy(self.descs[id])
 
     def __getitem__(self, idx):

@@ -4,7 +4,7 @@ from sr_san.sr_data import SessionsDataset, collate_fn, collate_fn_valid
 from torch.utils.data import DataLoader
 import os.path as osp
 
-TRAIN = True
+TRAIN = False
 HIDDEN_SIZE = 768
 BATCH_SIZE = 64
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -15,13 +15,14 @@ PARAMS = 'params/hier_filter10_2'
 # DE_PRODUCTS = 518327
 # JP_PRODUCTS = 395009
 
-# 10 prodcut
-# UK_PRODUCTS = 163109 (old)
-# DE_PRODUCTS = 158175
-# JP_PRODUCTS = 137238
-UK_PRODUCTS = 162952
-DE_PRODUCTS = 158001
-JP_PRODUCTS = 136933
+# 10 product
+UK_PRODUCTS = 163109  # (old)
+DE_PRODUCTS = 158175
+JP_PRODUCTS = 137238
+
+# UK_PRODUCTS = 162952
+# DE_PRODUCTS = 158001
+# JP_PRODUCTS = 136933
 
 # 5 product
 # UK_PRODUCTS = 285145
@@ -60,9 +61,9 @@ else:
     de_net = model.MultiSequence(hidden_size=HIDDEN_SIZE, n_node=DE_PRODUCTS).to(DEVICE)
     jp_net = model.MultiSequence(hidden_size=HIDDEN_SIZE, n_node=JP_PRODUCTS).to(DEVICE)
     uk_net = model.MultiSequence(hidden_size=HIDDEN_SIZE, n_node=UK_PRODUCTS).to(DEVICE)
-    de_net.load_state_dict(torch.load(osp.join(PARAMS,'recc_model_DE.pt')))
-    jp_net.load_state_dict(torch.load(osp.join(PARAMS,'recc_model_JP.pt')))
-    uk_net.load_state_dict(torch.load(osp.join(PARAMS,'recc_model_UK.pt')))
+    de_net.load_state_dict(torch.load(osp.join(PARAMS, 'recc_model_DE.pt')))
+    jp_net.load_state_dict(torch.load(osp.join(PARAMS, 'recc_model_JP.pt')))
+    uk_net.load_state_dict(torch.load(osp.join(PARAMS, 'recc_model_UK.pt')))
     loaders = [valid_de_loader, valid_jp_loader, valid_uk_loader]
     sets = [valid_de_set, valid_jp_set, valid_uk_set]
     models = [de_net, jp_net, uk_net]
