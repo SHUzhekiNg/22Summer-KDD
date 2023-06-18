@@ -1,6 +1,4 @@
-.venv
-data/
-runs/
-params/
-__pycache__
+processed_nvt
+preprocessing/categories
+data
 .idea
