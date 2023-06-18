@@ -187,10 +187,13 @@ class Metesre():
         return mrr
 
 
-    def train(self, epoch= 10, batch_size = 32):
+    def train(self, epoch= 10, batch_size = 32, from_checkpoint = False):
+        if from_checkpoint:
+            checkpoint_path = './model_checkpoint.h5'
+            self.model.load_weights(checkpoint_path)
 
         checkpoint_callback = ModelCheckpoint(
-            '/kaggle/working/model_checkpoint.h5',
+            './model_checkpoint.h5',
             monitor='val_cosine_similarity',
             save_best_only=True,
             save_weights_only=False,
