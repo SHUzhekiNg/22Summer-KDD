@@ -31,6 +31,8 @@ session_train.csv
 # Pipeline
 
 1. Make directory `data` under the project root. For instance,
+   
+   
    ![image-20230620132011366](https://raw.githubusercontent.com/SHUzhekiNg/SHUzhekiNg.github.io/main/assets/typoraimages/image-20230620132011366.png)
 2. run command `pip install -r requirements.txt`
    Tested under Python3.9/3.10, CUDA 11.7
