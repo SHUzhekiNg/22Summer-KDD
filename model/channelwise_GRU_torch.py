@@ -11,14 +11,14 @@ from tqdm import tqdm
 
 
 class GRUModel(nn.Module):
-    def __init__(self, vocab_size1, vocab_size2, embedding_dim, hidden_units):
+    def __init__(self, vocab_size1, vocab_size2, vocab_size3, vocab_size4, vocab_size5, vocab_size6, embedding_dim, hidden_units):
         super(GRUModel, self).__init__()
         self.embedding1 = nn.Embedding(vocab_size1, embedding_dim)
         self.embedding2 = nn.Embedding(vocab_size2, embedding_dim)
-        self.embedding3 = nn.Embedding(vocab_size1, embedding_dim)
-        self.embedding4 = nn.Embedding(vocab_size2, embedding_dim)
-        self.embedding5 = nn.Embedding(vocab_size1, embedding_dim)
-        self.embedding6 = nn.Embedding(vocab_size2, embedding_dim)
+        self.embedding3 = nn.Embedding(vocab_size3, embedding_dim)
+        self.embedding4 = nn.Embedding(vocab_size4, embedding_dim)
+        self.embedding5 = nn.Embedding(vocab_size5, embedding_dim)
+        self.embedding6 = nn.Embedding(vocab_size6, embedding_dim)
         self.gru1 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
         self.gru2 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
         self.gru3 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
@@ -26,7 +26,7 @@ class GRUModel(nn.Module):
         self.gru5 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
         self.gru6 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
         self.dropout = nn.Dropout(0.3)
-        self.output_layer = nn.Linear(2 * hidden_units, vocab_size1)
+        self.output_layer = nn.Linear(6 * hidden_units, vocab_size1)
 
     def forward(self, input1, input2, input3, input4, input5, input6):
         embedded_input1 = self.embedding1(input1)
@@ -37,17 +37,18 @@ class GRUModel(nn.Module):
         embedded_input6 = self.embedding2(input6)
         gru_output1, _ = self.gru1(embedded_input1)
         gru_output2, _ = self.gru2(embedded_input2)
-        gru_output3, _ = self.gru1(embedded_input3)
-        gru_output4, _ = self.gru2(embedded_input4)
-        gru_output5, _ = self.gru1(embedded_input5)
-        gru_output6, _ = self.gru2(embedded_input6)
+        gru_output3, _ = self.gru3(embedded_input3)
+        gru_output4, _ = self.gru4(embedded_input4)
+        gru_output5, _ = self.gru5(embedded_input5)
+        gru_output6, _ = self.gru6(embedded_input6)
         dropout_output1 = self.dropout(gru_output1[:, -1, :])
         dropout_output2 = self.dropout(gru_output2[:, -1, :])
         dropout_output3 = self.dropout(gru_output3[:, -1, :])
         dropout_output4 = self.dropout(gru_output4[:, -1, :])
         dropout_output5 = self.dropout(gru_output5[:, -1, :])
         dropout_output6 = self.dropout(gru_output6[:, -1, :])
-        concatenated_output = torch.cat((dropout_output1, dropout_output2, dropout_output3, dropout_output4, dropout_output5, dropout_output6), dim=1)
+        concatenated_output = torch.cat((dropout_output1, dropout_output2, dropout_output3,
+                                         dropout_output4, dropout_output5, dropout_output6), dim=1)
         output = self.output_layer(concatenated_output)
         return output
 
@@ -76,10 +77,10 @@ class Metesre():
 
         self.vocab_size1 = max(item for sublist in X1 for item in sublist) + 1
         self.vocab_size2 = max(item for sublist in X2 for item in sublist) + 1
-        self.vocab_size3 = max(item for sublist in X1 for item in sublist) + 1
-        self.vocab_size4 = max(item for sublist in X2 for item in sublist) + 1
-        self.vocab_size5 = max(item for sublist in X1 for item in sublist) + 1
-        self.vocab_size6 = max(item for sublist in X2 for item in sublist) + 1
+        self.vocab_size3 = max(item for sublist in X3 for item in sublist) + 1
+        self.vocab_size4 = max(item for sublist in X4 for item in sublist) + 1
+        self.vocab_size5 = max(item for sublist in X5 for item in sublist) + 1
+        self.vocab_size6 = max(item for sublist in X6 for item in sublist) + 1
 
         print("Vocab Sizes: \n", self.vocab_size1, self.vocab_size2, self.vocab_size3, self.vocab_size4, self.vocab_size5, self.vocab_size6)
 
@@ -127,7 +128,9 @@ class Metesre():
             X1, X2, X3, X4, X5, X6, y, test_size=0.005, random_state=42, shuffle=True)
 
     def buildModel(self):
-        self.model = GRUModel(self.vocab_size1, self.vocab_size2, self.embedding_dim, self.hidden_units)
+        self.model = GRUModel(self.vocab_size1, self.vocab_size2, self.vocab_size3,
+                              self.vocab_size4, self.vocab_size5, self.vocab_size6,
+                              self.embedding_dim, self.hidden_units)
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters())
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -135,7 +138,9 @@ class Metesre():
 
     def train(self, epoch=10, batch_size=32):
         self.model.train()
-        train_dataset = TensorDataset(self.X1_train, self.X2_train, self.X3_train, self.X4_train, self.X5_train, self.X6_train, torch.tensor(self.y_train))
+        train_dataset = TensorDataset(self.X1_train, self.X2_train, self.X3_train,
+                                      self.X4_train, self.X5_train, self.X6_train,
+                                      torch.tensor(self.y_train))
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
         for epoch in range(epoch):
@@ -162,14 +167,16 @@ class Metesre():
 
     def test(self):
         self.model.eval()
-        test_dataset = TensorDataset(self.X1_test, self.X2_test, torch.tensor(self.y_test))
+        test_dataset = TensorDataset(self.X1_test, self.X2_test, self.X3_test,
+                                     self.X4_test, self.X5_test, self.X6_test,
+                                     torch.tensor(self.y_test))
         test_loader = DataLoader(test_dataset, batch_size=1)
 
         correct = 0
         total = 0
 
         with torch.no_grad():
-            for inputs1, inputs2, labels in tqdm(test_loader):
+            for inputs1, inputs2, inputs3, inputs4, inputs5, inputs6, labels in tqdm(test_loader):
                 inputs1 = inputs1.to(self.device)
                 inputs2 = inputs2.to(self.device)
                 inputs3 = inputs3.to(self.device)
