@@ -2,13 +2,122 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
+import math
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.nn import LayerNorm, BatchNorm1d
+import torch.nn.functional as F
+from torch.nn import TransformerEncoder
+from torch.nn import TransformerEncoderLayer
 from tqdm import tqdm
 
+
+class MultiSequence(nn.Module):
+    def __init__(self, vocab_size1, vocab_size2, vocab_size3, vocab_size4, vocab_size5, vocab_size6, embedding_dim, hidden_units):
+        self.hidden_units = hidden_units
+        super(MultiSequence, self).__init__()
+        self.embedding1 = nn.Embedding(vocab_size1, embedding_dim)
+        self.embedding2 = nn.Embedding(vocab_size2, embedding_dim)
+        self.embedding3 = nn.Embedding(vocab_size3, embedding_dim)
+        self.embedding4 = nn.Embedding(vocab_size4, embedding_dim)
+        self.embedding5 = nn.Embedding(vocab_size5, embedding_dim)
+        self.embedding6 = nn.Embedding(vocab_size6, embedding_dim)
+
+        self.layer_norm1 = LayerNorm(embedding_dim)
+        self.layer_norm2 = LayerNorm(embedding_dim)
+        self.layer_norm3 = LayerNorm(embedding_dim)
+        self.layer_norm4 = LayerNorm(embedding_dim)
+        self.layer_norm5 = LayerNorm(embedding_dim)
+        self.layer_norm6 = LayerNorm(embedding_dim)
+
+        self.batch_norm1 = BatchNorm1d(embedding_dim)
+        self.batch_norm2 = BatchNorm1d(embedding_dim)
+        self.batch_norm3 = BatchNorm1d(embedding_dim)
+        self.batch_norm4 = BatchNorm1d(embedding_dim)
+        self.batch_norm5 = BatchNorm1d(embedding_dim)
+        self.batch_norm6 = BatchNorm1d(embedding_dim)
+
+        self.encoder1 = self.create_encoder()
+        self.encoder2 = self.create_encoder()
+        self.encoder3 = self.create_encoder()
+        self.encoder4 = self.create_encoder()
+        self.encoder5 = self.create_encoder()
+        self.encoder6 = self.create_encoder()
+        self.encoder_all = self.create_encoder(6)
+
+        self.dropout = nn.Dropout(0.3)
+        self.lin_out = nn.Linear(6 * hidden_units, vocab_size1)
+
+        # self.reset_parameters()
+
+    def create_encoder(self, size_m=1):
+        layer = TransformerEncoderLayer(d_model=self.hidden_units*size_m, nhead=1, dim_feedforward=self.hidden_units*size_m, batch_first=True)
+        return TransformerEncoder(layer, num_layers=1)
+
+    # def reset_parameters(self):
+    #     stdv = 1.0 / math.sqrt(self.hidden_size)
+    #     for weight in self.parameters():
+    #         weight.data.uniform_(-stdv, stdv)
+
+    # def compute_scores(self, hidden):
+    #     # hidden = [B, LATENT_SIZE]
+    #     # embedding = [N_PRODUCTS, LATENT_SIZE]
+    #     # scores = [B, N_PRODUCTS]
+    #     e = self.embedding.weight
+    #     hidden = self.lin_out(hidden)
+    #     scores = hidden @ e.T
+    #     return scores
+
+    def forward(self, input1, input2, input3, input4, input5, input6):
+        embedded_input1 = self.embedding1(input1)
+        embedded_input2 = self.embedding2(input2)
+        embedded_input3 = self.embedding3(input3)
+        embedded_input4 = self.embedding4(input4)
+        embedded_input5 = self.embedding5(input5)
+        embedded_input6 = self.embedding6(input6)
+
+        embedded_input1 = self.layer_norm1(embedded_input1)
+        embedded_input2 = self.layer_norm2(embedded_input2)
+        embedded_input3 = self.layer_norm3(embedded_input3)
+        embedded_input4 = self.layer_norm4(embedded_input4)
+        embedded_input5 = self.layer_norm5(embedded_input5)
+        embedded_input6 = self.layer_norm6(embedded_input6)
+
+        embedded_input1 = embedded_input1.transpose(1, 2)  # 调整维度顺序以匹配 Batch Normalization 的要求
+        embedded_input2 = embedded_input2.transpose(1, 2)
+        embedded_input3 = embedded_input3.transpose(1, 2)
+        embedded_input4 = embedded_input4.transpose(1, 2)
+        embedded_input5 = embedded_input5.transpose(1, 2)
+        embedded_input6 = embedded_input6.transpose(1, 2)
+
+        embedded_input1 = self.batch_norm1(embedded_input1)
+        embedded_input2 = self.batch_norm2(embedded_input2)
+        embedded_input3 = self.batch_norm3(embedded_input3)
+        embedded_input4 = self.batch_norm4(embedded_input4)
+        embedded_input5 = self.batch_norm5(embedded_input5)
+        embedded_input6 = self.batch_norm6(embedded_input6)
+
+        embedded_input1 = embedded_input1.transpose(1, 2)  # 还原维度顺序
+        embedded_input2 = embedded_input2.transpose(1, 2)
+        embedded_input3 = embedded_input3.transpose(1, 2)
+        embedded_input4 = embedded_input4.transpose(1, 2)
+        embedded_input5 = embedded_input5.transpose(1, 2)
+        embedded_input6 = embedded_input6.transpose(1, 2)
+
+        transformer_output1 = self.encoder1(embedded_input1)
+        transformer_output2 = self.encoder2(embedded_input2)
+        transformer_output3 = self.encoder3(embedded_input3)
+        transformer_output4 = self.encoder4(embedded_input4)
+        transformer_output5 = self.encoder5(embedded_input5)
+        transformer_output6 = self.encoder6(embedded_input6)
+
+        concatenated_output = torch.cat((transformer_output1, transformer_output2, transformer_output3, transformer_output4, transformer_output5, transformer_output6), dim=-1)
+        transformer_output_all = self.encoder_all(concatenated_output)
+        dropout_output = self.dropout(transformer_output_all[:, -1, :])
+        output = self.lin_out(dropout_output)
+        return output
 
 class GRUModel(nn.Module):
     def __init__(self, vocab_size1, vocab_size2, vocab_size3, vocab_size4, vocab_size5, vocab_size6, embedding_dim, hidden_units):
@@ -95,7 +204,6 @@ class GRUModel(nn.Module):
         output = self.output_layer(concatenated_output)
         return output
 
-
 class Metesre():
     def __init__(self, embedding_dim, hidden_units, max_len, lang):
         self.embedding_dim = embedding_dim
@@ -173,7 +281,7 @@ class Metesre():
         print("preprocessing done.")
 
     def buildModel(self):
-        self.model = GRUModel(self.vocab_size1, self.vocab_size2, self.vocab_size3, self.vocab_size4, self.vocab_size5, self.vocab_size6, self.embedding_dim, self.hidden_units)
+        self.model = MultiSequence(self.vocab_size1, self.vocab_size2, self.vocab_size3, self.vocab_size4, self.vocab_size5, self.vocab_size6, self.embedding_dim, self.hidden_units)  # MultiSequence GRUModel
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters())
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -209,7 +317,6 @@ class Metesre():
                 best_loss = running_loss
                 print("saving to model.pth")
                 torch.save(self.model.state_dict(),'model.pth')
-
 
     def test(self):
         self.model.eval()

@@ -34,12 +34,12 @@ class GRUModel(nn.Module):
         self.batch_norm5 = BatchNorm1d(embedding_dim)
         self.batch_norm6 = BatchNorm1d(embedding_dim)
 
-        self.gru1 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
-        self.gru2 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
-        self.gru3 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
-        self.gru4 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
-        self.gru5 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
-        self.gru6 = nn.GRU(embedding_dim, hidden_units, batch_first=True)
+        self.gru1 = nn.LSTM(embedding_dim, hidden_units, batch_first=True)
+        self.gru2 = nn.LSTM(embedding_dim, hidden_units, batch_first=True)
+        self.gru3 = nn.LSTM(embedding_dim, hidden_units, batch_first=True)
+        self.gru4 = nn.LSTM(embedding_dim, hidden_units, batch_first=True)
+        self.gru5 = nn.LSTM(embedding_dim, hidden_units, batch_first=True)
+        self.gru6 = nn.LSTM(embedding_dim, hidden_units, batch_first=True)
         self.dropout = nn.Dropout(0.3)
         self.output_layer = nn.Linear(6 * hidden_units, vocab_size1)
 
@@ -186,6 +186,9 @@ class Metesre():
         best_loss = 10000000
         for epoch in range(epoch):
             running_loss = 0.0
+            reciprocal_ranks = []
+            correct = 0
+            total = 0
             for inputs1, inputs2, inputs3, inputs4, inputs5, inputs6, labels in tqdm(train_loader):
                 inputs1 = inputs1.to(self.device)
                 inputs2 = inputs2.to(self.device)
@@ -203,13 +206,28 @@ class Metesre():
                 self.optimizer.step()
 
                 running_loss += loss.item()
-            
+
+                _, predicted = torch.max(outputs.data, 1)
+
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+                # 将计算转移到CUDA设备上
+                scores = outputs.data.squeeze().cpu().numpy()
+                ranks = (-scores).argsort()
+                rank_of_correct = np.where(ranks == labels.item())[0][0]
+                reciprocal_rank = 1.0 / (rank_of_correct + 1)
+                reciprocal_ranks.append(reciprocal_rank)
+
+            accuracy = 100 * correct / total
+            mrr = np.mean(reciprocal_ranks)
             print(f"Epoch: {epoch + 1}, Loss: {running_loss / len(train_loader)}")
+            print(f"Test Accuracy: {accuracy}%")
+            print(f"MRR: {mrr}")
             if (epoch+1) % save_feq == 0 and best_loss > running_loss :
                 best_loss = running_loss
                 print("saving to model.pth")
                 torch.save(self.model.state_dict(),'model.pth')
-
 
     def test(self):
         self.model.eval()
